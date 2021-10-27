@@ -3,6 +3,13 @@ from urllib.parse import urlparse
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
+    
+    # gets rid of fragment part of URL
+    defragmented = []
+    for link in links:
+        parsed = urlparse(link)
+        defragmented.append(parsed.scheme + netloc + path + params + query)
+
     return [link for link in links if is_valid(link)]
 
 def extract_next_links(url, resp):
@@ -25,6 +32,8 @@ def is_valid(url):
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
+        if "ics.uci.edu" not in parsed.netloc and "cs.uci.edu" not in parsed.netloc and "informatics.uci.edu" not in parsed.netloc and "stat.uci.edu" not in parsed.netloc:
+            return False # make sure that the netlocation is one of the ics sites
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
