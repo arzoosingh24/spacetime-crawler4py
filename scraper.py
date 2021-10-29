@@ -28,6 +28,10 @@ def extract_next_links(url, resp):
     return list()
 
 def checkNetLoc(netloc, path):
+
+    '''Checks whether or not a cewrtain net location
+    should be skipped. If so, returns False'''
+    
     if "ics.uci.edu" not in netloc and "cs.uci.edu" not in netloc and "informatics.uci.edu" not in netloc and "stat.uci.edu" not in netloc and "today.uci.edu" not in netloc:
         return False # make sure that the netlocation is one of the ics sites
     if "today.uci.edu" in netloc and "/department/information_computer_sciences" not in path:
