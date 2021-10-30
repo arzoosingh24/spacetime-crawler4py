@@ -1,21 +1,41 @@
 import re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
-
+from Assignment1 import PartA
+ 
+visited = set() # URLs that we've already visited
+longestPageLength = 0
+longestPageName = ""
 def scraper(url, resp):
     links = extract_next_links(url, resp)
-    
-    # gets rid of fragment part of URL
-    defragmented = []
-    for link in links:
-        parsed = urlparse(link)
-        defragmented.append(parsed.scheme + netloc + path + params + query)
 
     return [link for link in links if is_valid(link)]
 
 def extract_next_links(url, resp):
-    parsed = urlparse(url)
-    finalLinks = []
+    global longestPageLength
+    global longestPageName
+    global visited
+    parsed = urlparse(url) # parsed url
+    finalLinks = [] # the links we will return
+    words = []
+    if is_valid(url) and resp.status <= 203 and 200 <= resp.status and url not in visited:
+        beautifulSoup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+        listOfWords = beautifulSoup.text.split()
+        
+        for word in listOfWords:
+
+            if all(48 <= ord(char) <= 57 or (97 <= ord(char) <= 122) or (65 <= ord(char) <= 90) or (char == "'") for char in word):
+                words.append(word)
+
+        if len(listOfWords) > longestPageLength:
+            longestPageLength = len(listOfWords)
+            longestPageName = url
+        for link in beautifulSoup.findAll("a"):
+            finalLinks.append(link.get("href"))
+        
+        
+    addUniquePage(defragment(url))
+        # once URL is visited, add it to the visited array
     # Implementation required.
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
@@ -25,13 +45,13 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    return list()
+    return finalLinks
 
-def checkNetLoc(netloc, path):
+def checkNetLoc(netloc, path, query):
 
-    '''Checks whether or not a cewrtain net location
+    '''Checks whether or not a certain net location
     should be skipped. If so, returns False'''
-    
+
     if "ics.uci.edu" not in netloc and "cs.uci.edu" not in netloc and "informatics.uci.edu" not in netloc and "stat.uci.edu" not in netloc and "today.uci.edu" not in netloc:
         return False # make sure that the netlocation is one of the ics sites
     if "today.uci.edu" in netloc and "/department/information_computer_sciences" not in path:
@@ -40,7 +60,9 @@ def checkNetLoc(netloc, path):
         return False # we can't have archive or grape or intranet on there
     if "wics.ics.uci.edu" in netloc and ("events" in path or "contact" in path):
         return False
-    if "hack.ics.uci.edu" in netloc and "contact" in path:
+    if "contact" in path or "calendar" in path:
+        return False
+    if "replytocom" in query:
         return False
     return True
 
@@ -55,9 +77,8 @@ def is_valid(url):
         if parsed.scheme != "http" and parsed.scheme != "https":
             return False
 
-        if checkNetLoc(parsed.netloc, parsed.path) == False:
+        if checkNetLoc(parsed.netloc, parsed.path, parsed.query) == False:
             return False
-        
         
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
@@ -72,3 +93,22 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
+
+#check if crawled
+def addUniquePage(url):
+    global visited
+    if url.endswith("/"):
+        url = url[:-1]
+    
+    if url not in visited:
+        visited.add(url)
+        return True
+    
+    return False
+
+def defragment(link):
+    parsed = urlparse(link)
+    return parsed.scheme + parsed.netloc + parsed.path + parsed.params + parsed.query
+
+    
