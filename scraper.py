@@ -47,7 +47,7 @@ def extract_next_links(url, resp):
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     return finalLinks
 
-def checkNetLoc(netloc, path, query):
+def checkNetLoc(netloc, path, query, fragment):
 
     '''Checks whether or not a certain net location
     should be skipped. If so, returns False'''
@@ -64,6 +64,10 @@ def checkNetLoc(netloc, path, query):
         return False
     if "replytocom" in query:
         return False
+    if "version" in query:
+        return False
+    if "comment" in fragment:
+        return False
     return True
 
 
@@ -77,7 +81,7 @@ def is_valid(url):
         if parsed.scheme != "http" and parsed.scheme != "https":
             return False
 
-        if checkNetLoc(parsed.netloc, parsed.path, parsed.query) == False:
+        if checkNetLoc(parsed.netloc, parsed.path, parsed.query, parsed.fragment) == False:
             return False
         
         return not re.match(
