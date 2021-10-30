@@ -47,7 +47,7 @@ def extract_next_links(url, resp):
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     return finalLinks
 
-def checkNetLoc(netloc, path, query, fragment):
+def checkNetLoc(invalid, netloc, path, query, fragment):
 
     '''Checks whether or not a certain net location
     should be skipped. If so, returns False'''
@@ -60,14 +60,15 @@ def checkNetLoc(netloc, path, query, fragment):
         return False # we can't have archive or grape or intranet on there
     if "wics.ics.uci.edu" in netloc and ("events" in path or "contact" in path):
         return False
-    if "contact" in path or "calendar" in path:
+    if "contact" in path or "calendar" in path or "ical" in path:
         return False
-    if "replytocom" in query:
-        return False
-    if "version" in query:
+    if "replytocom" in query or "version" in query:
         return False
     if "comment" in fragment:
         return False
+    # for typ in invalid:
+    #     if typ in path or typ in query or typ in fragment:
+    #         return False
     return True
 
 
@@ -77,13 +78,22 @@ def is_valid(url):
     # There are already some conditions that return False.
     try:
         parsed = urlparse(url)
-        
+        invalid = ["css","js","bmp","gif","jpeg","ico","png","tiff",
+                    "mid","mp2","mp3","mp4","wav","avi","mov","mpeg","ram",
+                    "m4v","mkv","ogg","ogv","py","json","pdf","img","comment" ,"ps","eps","tex","ppt",
+                    "pptx","doc","docx","xls","xlsx","names","replytocom","data","dat",
+                    "exe","bz2","tar", "contact", "calendar", "ical","msi","bin","7z","psd","dmg","iso",
+                    "epub","dll","cnf","version","tgz","sha1","thmx","mso","arff",
+                    "rtf","jar","csv","rm","smil","wmv","swf","wma","zip",
+                    "rar","gz","txt"]
+
         if parsed.scheme != "http" and parsed.scheme != "https":
             return False
 
-        if checkNetLoc(parsed.netloc, parsed.path, parsed.query, parsed.fragment) == False:
+        if checkNetLoc(invalid,parsed.netloc, parsed.path, parsed.query, parsed.fragment) == False:
             return False
-        
+
+
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
